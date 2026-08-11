@@ -1,0 +1,19 @@
+# Normalise line endings to LF in the repository and working tree.
+* text=auto eol=lf
+
+# Text files
+*.md    text eol=lf
+*.ino   text eol=lf
+*.cpp   text eol=lf
+*.h     text eol=lf
+*.c     text eol=lf
+*.json  text eol=lf
+*.ini   text eol=lf
+*.txt   text eol=lf
+.gitignore     text eol=lf
+.gitattributes text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.pdf binary
