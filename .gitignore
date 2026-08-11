@@ -1,0 +1,32 @@
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+.clang_complete
+.gcc-flags.json
+
+# Build artefacts
+build/
+*.o
+*.a
+*.d
+*.su
+*.elf
+*.bin
+*.hex
+*.map
+*.lst
+
+# Arduino IDE
+*.ino.cpp
+*.ino.with_bootloader.*
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
