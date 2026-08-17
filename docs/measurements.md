@@ -158,6 +158,7 @@ Because the firmware and input side were demonstrably working, the fault had to 
 | 10 | Resistance, unpowered | R3, one lead lifted | 10 kΩ | Component correct; the fault is wiring, not a wrong part |
 | 11 | Resistance, unpowered | Gate → ground, after reseating R3 | 10 kΩ | Pull-down correctly in circuit |
 | 12 | Polarity test | Battery leads reversed | Motor runs continuously, no gate control | Drain below source forward-biases the MOSFET's intrinsic body diode, which conducts regardless of gate state. Confirms the original orientation was correct |
+| 13 | Voltage | Gate → ground, powered, toggle on | ~4.9 V | Matches the calculated divider value of 5 × 10000 / 10220. Confirms the gate node is correctly driven after reseating R3 |
 
 ### Why measurements 2, 4 and 5 were contradictory
 
@@ -200,17 +201,3 @@ The Stage 1 short had the same underlying shape: a component bypassed by an unin
 In both cases the component was present, correct, and electrically irrelevant. A resistor with both leads in one column is a wire — current takes the copper strip rather than the resistive element.
 
 **Check adopted:** before applying power, verify every two-terminal component spans two distinct nets. Continuity across the component, with power disconnected, confirms it.
-
-### Outstanding measurements
-
-| Measurement | Node | Expected | Measured | Notes |
-|---|---|---|---|---|
-| Gate voltage, powered | Gate → ground | ~4.9 V | | Confirms the divider behaves as calculated |
-| Duty cycle at first audible buzz | Motor | — | | Current flowing, torque insufficient to overcome static friction |
-| Duty cycle at first rotation | Motor | — | | Sets MIN_DUTY, currently 0 pending this figure |
-| Duty cycle for steady rotation | Motor | — | | Below this, expect stuttering |
-| V_DS at full duty | Drain → source | < 0.3 V if adequately enhanced | | Decisive for the MOSFET selection question |
-| Effective R_DS(on) | Derived | Compare against datasheet | | V_DS ÷ measured load current |
-| MOSFET case temperature at full duty | — | Near ambient | | Warmth indicates linear-region operation rather than switching |
-| D1 forward / reverse resistance | Across D1, unpowered | Conducts one way only | | Worth checking after the polarity error in case of damage |
-| Motor winding resistance | Motor terminals, unpowered | — | | Lowest of several readings, rotating the shaft between each |

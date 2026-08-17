@@ -214,19 +214,29 @@ The 1N4001 to hand is adequate here: 50 V reverse, 1 A forward, against a 6 V su
 
 ---
 
-## MOSFET selection: unresolved
+## MOSFET selection
 
-Two parts are available and neither is straightforwardly correct.
+The BUZ10 (TO-220) was used: around 23 A continuous, 50 V drain-source,
+R_DS(on) approximately 0.1 Ω. The current capacity is far beyond what a
+hobby motor demands, including stall.
 
-**2N7000 (TO-92).** Logic-level: V_GS(th) around 0.8–3 V, specified at V_GS = 4.5 V, so a 5 V pin turns it on properly. But continuous drain current is roughly 200 mA and R_DS(on) around 5 Ω at 4.5 V gate drive. A hobby motor draws hundreds of milliamps running and can exceed an amp at stall, so this part sits outside its rating on every start-up.
+The caveat is gate drive. That R_DS(on) figure is specified at
+V_GS = 10 V, and the BUZ10 is not a logic-level part — its threshold
+spread of roughly 2.1 V to 4 V is a manufacturing tolerance rather than a
+selectable range. The gate is driven at a measured 4.9 V, which is above
+threshold and sufficient to make the device conduct, as the working motor
+demonstrates.
 
-**BUZ10 (TO-220).** Ample capacity — around 23 A continuous, 50 V drain-source, R_DS(on) approximately 0.1 Ω. But that figure is specified at V_GS = 10 V and the part is not logic-level. Its threshold spread of roughly 2.1 V to 4 V is a manufacturing tolerance rather than a selectable range, so behaviour at 5 V gate drive cannot be predicted from the datasheet alone.
+Whether it is *fully* enhanced at that voltage is not established.
+Measuring V_DS at full duty would settle it — under about 0.3 V indicates
+the device is operating as a switch, while a higher figure or a warm tab
+would indicate linear-region operation with power dissipated as heat. That
+measurement has not been taken.
 
-**Decision deferred pending measurement.** The resolution is empirical: run at full duty and measure V_DS drain to source. Under about 0.3 V indicates adequate enhancement. Above 1 V, or a warm tab, indicates linear-region operation rather than switching, dissipating power as heat.
-
-Effective R_DS(on) can then be derived from V_DS and the measured load current and compared against the datasheet figure. The gap between them quantifies the cost of under-driving the gate.
-
-If the BUZ10 proves marginal, the textbook remedy is a gate driver — a small transistor switching the gate from a higher rail. That is a worthwhile extension in itself, since gate drive recurs throughout power electronics.
+- The BUZ10 is not a logic-level part and is driven at 4.9 V rather than
+  the 10 V at which its R_DS(on) is specified. It conducts adequately for
+  this load, but V_DS at full duty has not been measured, so full
+  enhancement is unverified.
 
 ---
 
