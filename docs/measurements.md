@@ -120,13 +120,14 @@ lost.
 
 ## Stage 4 — Load switching
 
-Not yet built. MOSFET selection is unresolved and depends on the first
-two measurements below.
+Built and partially measured. The debugging log below records the
+hardware readings taken during Stage 4 bring-up; the rows in this table
+are the measurements still outstanding.
 
 | Measurement | Node | Predicted | Measured | Reasoning |
 |---|---|---|---|---|
 | Motor winding resistance | Motor terminals, unpowered | — | | Take the lowest of several readings, rotating the shaft between each; brushed motors vary with commutator position |
-| Calculated stall current | — | V_supply / R_winding | | Determines whether the 2N7000 (~200 mA) is viable at all |
+| Calculated stall current | — | V_supply / R_winding | | Establishes the peak current the switching device and supply must handle |
 | V_DS at full duty, BUZ10 | Drain → source | < 0.3 V if adequately enhanced | | **[hardware]** The BUZ10 is not logic-level; its R_DS(on) is specified at V_GS = 10 V, and only measurement establishes behaviour at 5 V |
 | Effective R_DS(on) | Derived | Compare against 0.1 Ω datasheet figure | | V_DS / I_load; the gap quantifies the cost of under-driving the gate |
 | MOSFET case temperature at full duty | — | Near ambient | | Warmth indicates linear-region operation rather than switching |
