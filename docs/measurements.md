@@ -132,11 +132,13 @@ two measurements below.
 | MOSFET case temperature at full duty | — | Near ambient | | Warmth indicates linear-region operation rather than switching |
 | Supply voltage at switch-off, no flyback diode | Load supply | Spike, magnitude unresolvable | | **[hardware]** V = L(dI/dt); a multimeter is too slow to capture it, which is itself the finding |
 
+---
+
 ## Stage 4 — Debugging log: motor never turns
 
 All readings in this section were taken on physical hardware.
 
-Symptom. Potentiometer readings correct across the full ADC range, button toggle working, serial output reaching MAP: 255 at maximum, but the motor never turned at any duty cycle or toggle state.
+**Symptom.** Potentiometer readings correct across the full ADC range, button toggle working, serial output reaching MAP: 255 at maximum, but the motor never turned at any duty cycle or toggle state.
 
 Because the firmware and input side were demonstrably working, the fault had to lie downstream of analogWrite(). The measurements below were taken in that order deliberately: prove the load branch first, then the device, then the driving pin, then component values, then continuity.
 
@@ -171,7 +173,7 @@ Measurement 8 and the repeated ~250 Ω readings were taken with power applied an
 
 A multimeter in resistance mode injects a known test current and infers resistance from the resulting voltage. That inference assumes nothing else is driving the node. With the circuit powered, the gate voltage is set by the Arduino rather than by the meter, so the displayed figure is an artefact. The meter reported an outright error once the button was pressed and current began flowing.
 
-Rule adopted: resistance is measured only with all power disconnected. Live-circuit diagnosis uses voltage.
+**Rule adopted:** resistance is measured only with all power disconnected. Live-circuit diagnosis uses voltage.
 
 The invalid reading landing near R2's 220 Ω initially suggested a genuine parallel path, since two resistors sharing both nets would give 220 ∥ 10000 ≈ 215 Ω. That hypothesis was only eliminated by re-measuring unpowered, where the correct 10 kΩ appeared.
 
@@ -185,11 +187,11 @@ To be confirmed before this section is treated as final: a reversed supply acros
 
 The order proved more useful than any individual reading, and is worth reusing:
 
-Prove the load branch by bridging drain to source. If the motor runs, everything from battery through motor to ground is sound and the fault is confined to the gate.
-Prove the device by bridging gate to drain. If the motor runs, the MOSFET switches and the fault is in the gate drive rather than the transistor.
-Check the driving pin in isolation. A sagging output voltage shows the pin is loaded, localising the fault to the node it drives.
-Check component values and wiring against each other. Both were suspected here; measurement settled which.
-Check continuity with power off — the only condition in which resistance readings mean anything.
+1. Prove the load branch by bridging drain to source. If the motor runs, everything from battery through motor to ground is sound and the fault is confined to the gate.
+2. Prove the device by bridging gate to drain. If the motor runs, the MOSFET switches and the fault is in the gate drive rather than the transistor.
+3. Check the driving pin in isolation. A sagging output voltage shows the pin is loaded, localising the fault to the node it drives.
+4. Check component values and wiring against each other. Both were suspected here; measurement settled which.
+5. Check continuity with power off — the only condition in which resistance readings mean anything.
 
 ### Same fault class as Stage 1
 
@@ -197,7 +199,7 @@ The Stage 1 short had the same underlying shape: a component bypassed by an unin
 
 In both cases the component was present, correct, and electrically irrelevant. A resistor with both leads in one column is a wire — current takes the copper strip rather than the resistive element.
 
-Check adopted: before applying power, verify every two-terminal component spans two distinct nets. Continuity across the component, with power disconnected, confirms it.
+**Check adopted:** before applying power, verify every two-terminal component spans two distinct nets. Continuity across the component, with power disconnected, confirms it.
 
 ### Outstanding measurements
 
