@@ -204,7 +204,7 @@ This is the same floating-input principle as the Stage 1 button pull-down, appea
 
 The grounds must be common, and this is not optional. A MOSFET switches on V_GS, the potential difference between gate and source. If the two supplies' grounds float relative to each other, V_GS has no defined value and the circuit behaves erratically or not at all. On a full-size breadboard the upper and lower ground rails are electrically separate, so an explicit jumper links them.
 
-The corresponding hazard: the load supply positive must never reach the Arduino's 5 V pin. That pin is an output from the onboard regulator, and back-feeding it puts the regulator outside its design conditions with no protection in the path.
+**The corresponding hazard:** the load supply positive must never reach the Arduino's 5 V pin. That pin is an output from the onboard regulator, and back-feeding it puts the regulator outside its design conditions with no protection in the path.
 
 **Flyback diode, D1, across the motor.** A motor is an inductor, and V = L(dI/dt) means its current cannot change instantaneously. Switching the MOSFET off attempts to take that current to zero rapidly, and the inductor generates whatever voltage is needed to maintain it — potentially hundreds of volts, opposite in polarity to the supply.
 
@@ -222,7 +222,7 @@ Two parts are available and neither is straightforwardly correct.
 
 **BUZ10 (TO-220).** Ample capacity — around 23 A continuous, 50 V drain-source, R_DS(on) approximately 0.1 Ω. But that figure is specified at V_GS = 10 V and the part is not logic-level. Its threshold spread of roughly 2.1 V to 4 V is a manufacturing tolerance rather than a selectable range, so behaviour at 5 V gate drive cannot be predicted from the datasheet alone.
 
-Decision deferred pending measurement. The resolution is empirical: run at full duty and measure V_DS drain to source. Under about 0.3 V indicates adequate enhancement. Above 1 V, or a warm tab, indicates linear-region operation rather than switching, dissipating power as heat.
+**Decision deferred pending measurement.** The resolution is empirical: run at full duty and measure V_DS drain to source. Under about 0.3 V indicates adequate enhancement. Above 1 V, or a warm tab, indicates linear-region operation rather than switching, dissipating power as heat.
 
 Effective R_DS(on) can then be derived from V_DS and the measured load current and compared against the datasheet figure. The gap between them quantifies the cost of under-driving the gate.
 
