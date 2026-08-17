@@ -181,3 +181,63 @@ autonomously once configured, which is the more useful pattern to learn.
 isolation. Rejected for the reasons given under Debounce approach —
 principally that the non-blocking pattern is required later and is worth
 learning once.
+
+## Gate drive components
+
+Two resistors sit on the gate, each solving a distinct problem.
+
+Series resistor, R2, 220 Ω, between D9 and the gate. A MOSFET gate is capacitive. Charging a capacitor through zero resistance draws a large instantaneous current, potentially exceeding the pin's rating on every switching transition. R2 limits that surge. It slows switching slightly, an acceptable trade at the Uno's default PWM frequency of roughly 490 Hz where the period is around 2 ms and the transition is orders of magnitude shorter.
+
+Pull-down resistor, R3, 10 kΩ, gate to source. Before setup() runs, the Arduino's pins are inputs — high impedance, effectively floating. A floating gate on a capacitive node can leave the device in an indeterminate state, so the load could twitch or run at power-up. R3 guarantees the gate sits at ground until firmware deliberately drives it.
+
+R3 spans the gate column to the source column rather than running a separate jumper to the ground rail. The source is already tied to ground, so this reaches the same net topology with one fewer wire.
+
+This is the same floating-input principle as the Stage 1 button pull-down, appearing in a different context. The value follows the same reasoning — weak enough not to waste current, strong enough to dominate leakage. With R2 at 220 Ω the divider leaves the gate at approximately 4.9 V when driven.
+
+## Load switching topology
+
+Separate supply rails, common ground. The Arduino's 5 V rail powers the potentiometer and button. A separate 6 V pack — four 1.5 V cells in series — powers the motor. The two positive rails are never connected.
+
+The grounds must be common, and this is not optional. A MOSFET switches on V_GS, the potential difference between gate and source. If the two supplies' grounds float relative to each other, V_GS has no defined value and the circuit behaves erratically or not at all. On a full-size breadboard the upper and lower ground rails are electrically separate, so an explicit jumper links them.
+
+The corresponding hazard: the load supply positive must never reach the Arduino's 5 V pin. That pin is an output from the onboard regulator, and back-feeding it puts the regulator outside its design conditions with no protection in the path.
+
+Flyback diode, D1, across the motor. A motor is an inductor, and V = L(dI/dt) means its current cannot change instantaneously. Switching the MOSFET off attempts to take that current to zero rapidly, and the inductor generates whatever voltage is needed to maintain it — potentially hundreds of volts, opposite in polarity to the supply.
+
+D1 sits across the motor, reverse-biased in normal operation, banded end (cathode) toward the positive rail. It does nothing while the motor runs. At switch-off, when the motor drives its low side above the supply, the diode forward-biases and provides a circulating path for the decaying current, clamping the spike to roughly one diode drop above the rail.
+
+The 1N4001 to hand is adequate here: 50 V reverse, 1 A forward, against a 6 V supply and a circulating current that cannot exceed the motor's running current. Worth noting as a limitation that the 1N400x family are standard rectifiers with reverse recovery around 30 µs. At 490 Hz that is negligible against a 2 ms period, but at the tens of kilohertz used for motor control it would consume a meaningful fraction of each cycle, and a fast-recovery or Schottky part would be needed instead.
+
+## MOSFET selection: unresolved
+
+Two parts are available and neither is straightforwardly correct.
+
+2N7000 (TO-92). Logic-level: V_GS(th) around 0.8–3 V, specified at V_GS = 4.5 V, so a 5 V pin turns it on properly. But continuous drain current is roughly 200 mA and R_DS(on) around 5 Ω at 4.5 V gate drive. A hobby motor draws hundreds of milliamps running and can exceed an amp at stall, so this part sits outside its rating on every start-up.
+
+BUZ10 (TO-220). Ample capacity — around 23 A continuous, 50 V drain-source, R_DS(on) approximately 0.1 Ω. But that figure is specified at V_GS = 10 V and the part is not logic-level. Its threshold spread of roughly 2.1 V to 4 V is a manufacturing tolerance rather than a selectable range, so behaviour at 5 V gate drive cannot be predicted from the datasheet alone.
+
+Decision deferred pending measurement. The resolution is empirical: run at full duty and measure V_DS drain to source. Under about 0.3 V indicates adequate enhancement. Above 1 V, or a warm tab, indicates linear-region operation rather than switching, dissipating power as heat.
+
+Effective R_DS(on) can then be derived from V_DS and the measured load current and compared against the datasheet figure. The gap between them quantifies the cost of under-driving the gate.
+
+If the BUZ10 proves marginal, the textbook remedy is a gate driver — a small transistor switching the gate from a higher rail. That is a worthwhile extension in itself, since gate drive recurs throughout power electronics.
+
+## Dead zone handling: clamp versus remap
+
+A motor needs a minimum torque to overcome static friction, so below some duty cycle it draws current and produces heat without turning. Part of the potentiometer's travel therefore produces no useful output.
+
+Clamp (chosen). Map the ADC reading to the full 0–255 range, then force any non-zero value below MIN_DUTY up to MIN_DUTY. A potentiometer at zero still means fully off; anything above zero jumps to the slowest speed the motor can hold.
+
+Remap (rejected). Change the mapping's output range so the potentiometer's full sweep spans MIN_DUTY to 255. Smooth throughout, but the motor can then never be stopped by the dial alone — only by the button.
+
+The clamp was chosen because it preserves "off" as a state reachable from the potentiometer, matching how a physical dimmer or speed control behaves. The cost is that the bottom of the dial produces identical output, visible in the serial log as POT climbing while MAP stays pinned.
+
+MIN_DUTY is currently 0, which makes the clamp a no-op, because the stall threshold has not yet been measured. The constant is deliberately left at 0 rather than populated with a plausible guess: a value that looks empirical but is not is more misleading than one that is obviously unset.
+
+## Firmware unchanged from Stage 3
+
+The only firmware changes between Stage 3 and Stage 4 were renaming LED_PIN to GATE_PIN, brightness to dutyCycle and lightIsOn to motorIsOn, plus adding the clamp.
+
+That is the intended result rather than a shortcut. The firmware controls a duty cycle on pin 9. Whether that duty cycle switches 14 mA through an LED or amps through a motor is an electrical concern the software never sees. The load was replaced; the control logic was not.
+
+The renames were still worth making. Names that lag behind what the code does are a recurring source of confusion, and LED_PIN driving a MOSFET gate is exactly that.

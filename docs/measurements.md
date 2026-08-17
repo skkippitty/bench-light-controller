@@ -131,3 +131,84 @@ two measurements below.
 | Effective R_DS(on) | Derived | Compare against 0.1 Ω datasheet figure | | V_DS / I_load; the gap quantifies the cost of under-driving the gate |
 | MOSFET case temperature at full duty | — | Near ambient | | Warmth indicates linear-region operation rather than switching |
 | Supply voltage at switch-off, no flyback diode | Load supply | Spike, magnitude unresolvable | | **[hardware]** V = L(dI/dt); a multimeter is too slow to capture it, which is itself the finding |
+
+## Stage 4 — Debugging log: motor never turns
+
+All readings in this section were taken on physical hardware.
+
+Symptom. Potentiometer readings correct across the full ADC range, button toggle working, serial output reaching MAP: 255 at maximum, but the motor never turned at any duty cycle or toggle state.
+
+Because the firmware and input side were demonstrably working, the fault had to lie downstream of analogWrite(). The measurements below were taken in that order deliberately: prove the load branch first, then the device, then the driving pin, then component values, then continuity.
+
+### Measurements
+
+| # | Measurement | Node | Reading | Interpretation |
+|---|---|---|---|---|
+| 1 | Voltage | Arduino GND → battery + | 6 V | Grounds are common. A floating supply pair would give an erratic or meaningless value, so this ruled out the most common cause of a non-switching MOSFET |
+| 2 | Voltage | Gate → source | 0 V | V_GS = 0, so the device cannot conduct |
+| 3 | Voltage | Gate → drain | 6 V | Drain correctly at supply potential through the motor; the load branch is intact |
+| 4 | Voltage | D9 → ground, toggle on | 4 V | Pin is driving, but sagging below the expected 5 V — consistent with sourcing real current into a low-impedance path |
+| 5 | Voltage | Gate → ground | 0 V | Gate at ground potential despite R2 feeding it from a driven pin |
+| 6 | Bridge test | Drain to source | Motor turns | Motor, diode, battery, drain wiring and ground return all confirmed good |
+| 7 | Bridge test | Gate to drain | Motor turns | Applying 6 V to the gate switches the device; the MOSFET itself is functional |
+| 8 | Resistance, powered | Gate → ground | ~1 Ω, later ~250 Ω | Invalid — see below |
+| 9 | Resistance, unpowered | Across R3 leads, in circuit | 0 Ω | Both leads on the same net; the resistor was bridging a single column and acting as a wire |
+| 10 | Resistance, unpowered | R3, one lead lifted | 10 kΩ | Component correct; the fault is wiring, not a wrong part |
+| 11 | Resistance, unpowered | Gate → ground, after reseating R3 | 10 kΩ | Pull-down correctly in circuit |
+| 12 | Polarity test | Battery leads reversed | Motor runs continuously, no gate control | Drain below source forward-biases the MOSFET's intrinsic body diode, which conducts regardless of gate state. Confirms the original orientation was correct |
+
+### Why measurements 2, 4 and 5 were contradictory
+
+With R2 at 220 Ω from a driven 5 V pin and R3 at 10 kΩ to ground, the gate node should sit at
+
+5 × 10000 / (10000 + 220) ≈ 4.9 V
+
+Reading 0 V meant the node had a low-resistance path to ground that the divider calculation did not account for. The sag at D9 from 5 V to 4 V was the same fault seen from the other end: the pin was sourcing real current, which a capacitive MOSFET gate should never demand in steady state.
+
+### Invalid measurement: resistance on a live circuit
+
+Measurement 8 and the repeated ~250 Ω readings were taken with power applied and are meaningless.
+
+A multimeter in resistance mode injects a known test current and infers resistance from the resulting voltage. That inference assumes nothing else is driving the node. With the circuit powered, the gate voltage is set by the Arduino rather than by the meter, so the displayed figure is an artefact. The meter reported an outright error once the button was pressed and current began flowing.
+
+Rule adopted: resistance is measured only with all power disconnected. Live-circuit diagnosis uses voltage.
+
+The invalid reading landing near R2's 220 Ω initially suggested a genuine parallel path, since two resistors sharing both nets would give 220 ∥ 10000 ≈ 215 Ω. That hypothesis was only eliminated by re-measuring unpowered, where the correct 10 kΩ appeared.
+
+### Root cause
+
+A supply line was connected the wrong way round. It was not visible on inspection because other jumpers were routed over it.
+
+To be confirmed before this section is treated as final: a reversed supply across the load forward-biases the body diode and produces a permanently-on motor, which is measurement 12's result rather than the original symptom. The reversal was therefore most likely on a different node, and the exact conduction path should be reconstructed.
+
+### Diagnostic sequence
+
+The order proved more useful than any individual reading, and is worth reusing:
+
+Prove the load branch by bridging drain to source. If the motor runs, everything from battery through motor to ground is sound and the fault is confined to the gate.
+Prove the device by bridging gate to drain. If the motor runs, the MOSFET switches and the fault is in the gate drive rather than the transistor.
+Check the driving pin in isolation. A sagging output voltage shows the pin is loaded, localising the fault to the node it drives.
+Check component values and wiring against each other. Both were suspected here; measurement settled which.
+Check continuity with power off — the only condition in which resistance readings mean anything.
+
+### Same fault class as Stage 1
+
+The Stage 1 short had the same underlying shape: a component bypassed by an unintended connection. There, a redundant wire from the sense node to ground shorted across the pull-down. Here, both of R3's leads occupied one breadboard net.
+
+In both cases the component was present, correct, and electrically irrelevant. A resistor with both leads in one column is a wire — current takes the copper strip rather than the resistive element.
+
+Check adopted: before applying power, verify every two-terminal component spans two distinct nets. Continuity across the component, with power disconnected, confirms it.
+
+### Outstanding measurements
+
+| Measurement | Node | Expected | Measured | Notes |
+|---|---|---|---|---|
+| Gate voltage, powered | Gate → ground | ~4.9 V | | Confirms the divider behaves as calculated |
+| Duty cycle at first audible buzz | Motor | — | | Current flowing, torque insufficient to overcome static friction |
+| Duty cycle at first rotation | Motor | — | | Sets MIN_DUTY, currently 0 pending this figure |
+| Duty cycle for steady rotation | Motor | — | | Below this, expect stuttering |
+| V_DS at full duty | Drain → source | < 0.3 V if adequately enhanced | | Decisive for the MOSFET selection question |
+| Effective R_DS(on) | Derived | Compare against datasheet | | V_DS ÷ measured load current |
+| MOSFET case temperature at full duty | — | Near ambient | | Warmth indicates linear-region operation rather than switching |
+| D1 forward / reverse resistance | Across D1, unpowered | Conducts one way only | | Worth checking after the polarity error in case of damage |
+| Motor winding resistance | Motor terminals, unpowered | — | | Lowest of several readings, rotating the shaft between each |
