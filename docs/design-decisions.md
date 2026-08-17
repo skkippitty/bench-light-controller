@@ -233,11 +233,6 @@ the device is operating as a switch, while a higher figure or a warm tab
 would indicate linear-region operation with power dissipated as heat. That
 measurement has not been taken.
 
-- The BUZ10 is not a logic-level part and is driven at 4.9 V rather than
-  the 10 V at which its R_DS(on) is specified. It conducts adequately for
-  this load, but V_DS at full duty has not been measured, so full
-  enhancement is unverified.
-
 ---
 
 ## Dead zone handling: clamp versus remap

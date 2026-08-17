@@ -131,6 +131,10 @@ two measurements below.
 | Effective R_DS(on) | Derived | Compare against 0.1 Ω datasheet figure | | V_DS / I_load; the gap quantifies the cost of under-driving the gate |
 | MOSFET case temperature at full duty | — | Near ambient | | Warmth indicates linear-region operation rather than switching |
 | Supply voltage at switch-off, no flyback diode | Load supply | Spike, magnitude unresolvable | | **[hardware]** V = L(dI/dt); a multimeter is too slow to capture it, which is itself the finding |
+| D1 forward / reverse resistance | Across D1, unpowered | Conducts one way only | | Checks for damage following the reversed-polarity test |
+| Duty cycle at first audible buzz | Motor | — | | Current flowing, torque insufficient to overcome static friction |
+| Duty cycle at first rotation | Motor | — | | Sets MIN_DUTY, currently 0 pending this figure |
+| Duty cycle for steady rotation | Motor | — | | Below this, expect stuttering |
 
 ---
 
